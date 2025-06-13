@@ -1,0 +1,15 @@
+<main class="d-flex flex-column align-items-center w-100 flex-grow-1">
+  <h1 class="bg-success-subtle p-2 text-center text-success w-100">Iniciar Sesión</h1>
+  <form id="loginForm" class="m-3 d-flex flex-column justify-content-evenly flex-wrap align-items-center" style="width: 380px;">
+    <input class="m-2 p-2 text-center w-100" type="email" id="email" placeholder="Email" required />
+    <input class="m-2 p-2 text-center w-100" type="password" id="password" placeholder="Contraseña" required />
+
+    <select class="m-2 p-2 text-center w-100" id="role">
+      <option value="user" selected>Usuario</option>
+      <option value="admin">Administrador</option>
+    </select>
+
+    <button type="button" class="m-2 p-2 text-center btn btn-success w-100" id="login">Iniciar Sesión</button>
+  </form>
+</main>
+<script src="/scripts/login.js"></script>
