@@ -11,7 +11,7 @@ const createCb = (req, res, next) => {
     res
       .status(201)
       .cookie("user_id", "ValorCookie1234", { maxAge: 7 * 24 * 60 * 60 * 1000 })
-      .cookie("role", "admin", {
+      .cookie("role", "current_admin", {
         maxAge: 12 * 24 * 60 * 60 * 1000,
         signed: true,
       })

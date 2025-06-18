@@ -1,145 +1,137 @@
 import { Router } from "express";
 import { usersManager } from "../../data/manager.mongo.js";
-import passport from "../../middlewares/passport.mid.js";
+//import passport from "../../middlewares/passport.mid.js";
+import passportCb from "../../middlewares/passportCb.mid.js";
 import { verifyToken } from "../../helpers/token.util.js";
 
 const authRouter = Router();
 
+// Callback para registro
 const registerCb = async (req, res, next) => {
   try {
-    const {method, originalUrl: url} = req;
-    const message = "Registrado";
-    const data = {method, url, message};
-    res.status(201).json(data)
-  }catch(errror){
-    next(errror)
-  }
-
-   /* const existingUser = await usersManager.readBy({ email });
-    if (existingUser) {
-      return res.status(409).json({ error: "El usuario ya existe" });
-    }
-
-    const hashedPassword = await hash(password); 
-
-    const user = await usersManager.createOne({
-      first_name,
-      last_name,
-      email,
-      age,
-      password: hashedPassword
-    });
-
-    return res.status(201).json({ message: "Usuario registrado correctamente", user });
+    console.log("✅ Usuario registrado correctamente");
+    res
+      .status(201)
+      .json({ message: "Registro exitoso, redirigiendo a login..." });
   } catch (error) {
+    console.error("⚠️ Error en registerCb:", error);
     next(error);
-  }*/
+  }
 };
 
-
+// Callback para login
 const loginCb = async (req, res, next) => {
   try {
-    const { method, originalUrl: url } = req;
-    const { email, password } = req.body;
+    console.log("Iniciando login...");
 
-    if (!email || !password) {
-      return res.status(400).json({ error: "Datos inválidos" });
-    }
+    const opts = {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      signed: true,
+    };
+    const { user } = req;
 
-    let user = await usersManager.readBy({ email });
-    if (!user) {
+    if (!user || !user.token) {
+      console.error("❌ Error: Usuario no autenticado o token no generado");
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
 
-    const isValidPassword = await compareHash(password, user.password); 
-    if (!isValidPassword) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
-    }
+    console.log("✅ Usuario autenticado:", user);
 
-    const token = verifyToken({ user_id: user._id, role: user.role, email: user.email });
+    res
+      .status(200)
+      .cookie("token", user.token, opts)
+      .json({ message: "Login exitoso", user });
 
-    const opts = { maxAge: 12 * 24 * 60 * 60 * 1000, signed: true };
-    const data = { method, url, message: "Inicio exitoso (200) 👍" };
-
-    res.status(200).cookie("token", token, opts).json(data);
+    console.log("✅ Login exitoso, cookies establecidas.");
   } catch (error) {
+    console.error("⚠️ Error en loginCb:", error);
     next(error);
   }
 };
 
-const signoutCb =  (req, res, next) => {
+// Callback para cerrar sesión
+const signoutCb = (req, res, next) => {
   try {
-    const { method, originalUrl: url } = req;
-    const data = { method, url, message: "Desconectado exitosamente (200) 👍" };
-    console.log("Usuario desconectado")
+    console.log("🔄 Usuario desconectado");
 
-    res.status(200).clearCookie("token").json(data);
+    res
+      .status(200)
+      .clearCookie("token")
+      .json({ message: "Sesión cerrada correctamente" });
   } catch (error) {
+    console.error("⚠️ Error en signoutCb:", error);
     next(error);
   }
 };
 
+// Callback para verificar usuario online
 const onlineCb = async (req, res, next) => {
   try {
-    const { method, originalUrl: url } = req;
-    const { token } = req.signedCookies;
+    console.log("🔍 Verificando usuario online...");
+
+    const { token } = req.cookies;
+    if (!token) {
+      console.error("❌ No se encontró un token válido");
+      return res.status(401).json({ error: "Token no proporcionado" });
+    }
+
     const decodedToken = verifyToken(token);
-
     if (!decodedToken) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
+      console.error("❌ Token inválido o expirado");
+      return res.status(401).json({ error: "Token inválido" });
     }
 
-    let user = await usersManager.readById(decodedToken.user_id);
+    let user = await usersManager.readById(decodedToken._id);
     if (!user) {
-      return res.status(401).json({ error: "Credenciales inválidas" });
+      console.error("❌ Usuario no encontrado");
+      return res.status(401).json({ error: "Usuario no válido" });
     }
 
-    // Eliminamos la contraseña antes de enviar los datos del usuario
-    const { password, ...userData } = user.toObject();
+    console.log("✅ Usuario encontrado en la sesión:", user);
 
-    const data = {
-      method,
-      url,
-      user: userData,
-    };
+    const userData = user.toObject();
+    delete userData.password;
 
-    res.status(200).json(data);
+    res.status(200).json({ user: userData });
   } catch (error) {
+    console.error("⚠️ Error en onlineCb:", error);
     next(error);
   }
 };
 
-const badAuthCb = (req, res, next) => {
+// Callback para errores de autenticación
+const badAuthCb = (req, res) => {
+  console.error("❌ Error al autenticar");
+  return res.status(401).json({ error: "Error autenticando" });
+};
+
+const denegadoCb = (req, res, next) => {
   try {
-    return res.status(401).json({ error: "Error autenticando" });
-    error.statusCode = 401
-    throw error
-    console.log("Error al autentificar");
-    
+    const error = new Error("Acceso denegado, no tienes permisos");
+    error.statusCode = 403;
+    throw error;
   } catch (error) {
     next(error);
   }
 };
 
-const optionsBadAuth = { session: false, failureRedirect: "/api/auth/bad-auth" };
+// Opciones para autenticación
+/*const optionsBadAuth = {
+  session: false,
+  failureRedirect: "/api/auth/bad-auth",
+};
 
-authRouter.post("/register", passport.authenticate("register", optionsBadAuth), registerCb);
-authRouter.post("/login", passport.authenticate("login", optionsBadAuth), loginCb);
-authRouter.post("/signout", signoutCb);
-authRouter.post("/online", onlineCb);
-authRouter.get("/bad-auth", badAuthCb);
-authRouter.get("/google", passport.authenticate("google", { scope: ["email", "profile"] }));
-authRouter.get("/google/redirect", passport.authenticate("google", optionsBadAuth), loginCb);
+const optsDenegado = { session: false, failureRedirect: "/api/auth/denegado" };*/
+
+// Definición de rutas de autenticación
+authRouter.post("/register", passportCb("register"), registerCb);
+authRouter.post("/login", passportCb("login"), loginCb);
+authRouter.post("/signout", passportCb("current"), signoutCb);
+authRouter.post("/online", passportCb("current"), onlineCb);
+authRouter.get("/bad-auth", badAuthCb); 
+authRouter.get("/denegado", denegadoCb); 
+authRouter.get( "/google",passportCb("google", { scope: ["email", "profile"] }));
+authRouter.get("/google/redirect", passportCb("google"), loginCb);
 
 export default authRouter;
-
-
-
-
-/*const registerCb = async (req, res, next) => {
-  try {
-    const { first_name, last_name, email, age, password } = req.body;
-
-    if (!email || !password || !first_name) {
-      return res.status(400).json({ error: "Faltan campos obligatorios" });
-    }*/

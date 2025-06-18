@@ -1,10 +1,13 @@
 import { Router } from "express";
 import { productsManager } from "../../data/manager.mongo.js";
+//import passport from "../../middlewares/passport.mid.js";
+import passportCb from "../../middlewares/passportCb.mid.js";
 
 const productsRouter = Router();
 
 const createOne = async (req, res, next) => {
   try {
+    console.log("🛠 Usuario autenticado:", req.user);
     const data = req.body;
     const one = await productsManager.createOne(data);
     res.status(201).json({
@@ -104,10 +107,17 @@ const destroyByID = async (req, res, next) => {
   }
 };
 
-productsRouter.post("/", createOne);
+
+productsRouter.post("/", passportCb("current_admin"), createOne);
 productsRouter.get("/", readAll);
 productsRouter.get("/:id", readByID);
-productsRouter.put("/:id", updateByID);
-productsRouter.delete("/:id", destroyByID);
+productsRouter.put("/:id", passportCb("current_admin"), updateByID);
+productsRouter.delete("/:id", passportCb("current_admin"), destroyByID);
 
 export default productsRouter;
+
+
+
+
+
+//const optsDenegado = { session: false, failureRedirect: "/api/auth/denegado" };

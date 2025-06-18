@@ -1,5 +1,8 @@
 import { Router } from "express";
 import { cartsManager } from "../../data/manager.mongo.js";
+//import passport from "../../middlewares/passport.mid.js";
+import passportCb from "../../middlewares/passportCb.mid.js";
+
 
 const cartsRouter = Router();
 
@@ -104,10 +107,13 @@ const destroyByID = async (req, res, next) => {
   }
 };
 
-cartsRouter.post("/", createOne);
-cartsRouter.get("/", readAll);
-cartsRouter.get("/:id", readByID);
-cartsRouter.put("/:id", updateByID);
-cartsRouter.delete("/:id", destroyByID);
+//const optsDenegado = { session: false, failureRedirect: "/api/auth/denegado" };
+
+
+cartsRouter.post("/",passportCb("current"), createOne);
+cartsRouter.get("/",passportCb("current"), readAll);
+cartsRouter.get("/:id",passportCb("current"), readByID);
+cartsRouter.put("/:id",passportCb("current"), updateByID);
+cartsRouter.delete("/:id",passportCb("current"), destroyByID);
 
 export default cartsRouter;

@@ -1,6 +1,6 @@
 import { genSaltSync, hashSync, compareSync } from "bcrypt";
 
-const createHash = (pass) => (pass, genSaltSync(10));
+const createHash = (pass) => hashSync(pass, genSaltSync(10)); // Aquí estaba el error
 
 const compareHash = (pass, dbPass) => compareSync(pass, dbPass);
 

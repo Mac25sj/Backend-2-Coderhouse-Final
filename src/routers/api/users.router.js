@@ -1,5 +1,8 @@
 import { Router } from "express";
 import { usersManager } from "../../data/manager.mongo.js";
+//import passport from "../../middlewares/passport.mid.js";
+import passportCb from "../../middlewares/passportCb.mid.js";
+
 
 
 const usersRouter = Router();
@@ -106,10 +109,15 @@ const destroyByID = async (req, res, next) => {
   }
 };
 
-usersRouter.post("/", createOne);
-usersRouter.get("/", readAll);
-usersRouter.get("/:id", readByID);
-usersRouter.put("/:id", updateByID);
-usersRouter.delete("/:id", destroyByID);
+
+
+usersRouter.post("/", passportCb("current_admin"), createOne);
+usersRouter.get("/", passportCb("current_admin"), readAll);
+usersRouter.get("/:id",passportCb("current_admin"), readByID);
+usersRouter.put("/:id", passportCb("current"), updateByID);
+usersRouter.delete("/:id", passportCb("current"), destroyByID);
 
 export default usersRouter;
+
+
+//const optsDenegado = { session: false, failureRedirect: "/api/auth/denegado" };
