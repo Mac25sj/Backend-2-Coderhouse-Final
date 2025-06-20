@@ -1,119 +1,21 @@
-import { Router } from "express";
-import { cartsManager } from "../../data/manager.mongo.js";
-//import passport from "../../middlewares/passport.mid.js";
-import passportCb from "../../middlewares/passportCb.mid.js";
+import RouterHelper from "../../helpers/Router.helper.js";
+import cartsController from "../../controllers/carts..controller.js";
 
-
-const cartsRouter = Router();
-
-const createOne = async (req, res, next) => {
-  try {
-    const data = req.body;
-    const one = await cartsManager.createOne(data);
-    res.status(201).json({
-      method: req.method,
-      url: req.originalUrl,
-      response: one,
-    });
-  } catch (error) {
-    console.error("Error en createOne:", error);
-    next(error);
+class CartsRouter extends RouterHelper {
+  constructor() {
+    super();
+    this.controller = cartsController;
+    this.init();
   }
-};
 
-const readAll = async (req, res, next) => {
-  try {
-    const filter = req.query;
-    const all = await cartsManager.readAll(filter);
-
-    if (all.length > 0) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: all,
-      });
-    } else {
-      const error = new Error("No se encuentran carritos");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    console.error("Error en readAll:", error);
-    next(error);
+  init() {
+    this.create("/", ["USER", "ADMIN"], this.controller.createOne);
+    this.read("/", ["USER", "ADMIN"], this.controller.readAll);
+    this.read("/:id", ["USER", "ADMIN"], this.controller.readByID);
+    this.update("/:id", ["USER", "ADMIN"], this.controller.updateByID);
+    this.delete("/:id", ["USER", "ADMIN"], this.controller.destroyByID);
   }
-};
+}
 
-const readByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const one = await cartsManager.readById(id);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error("⚠️⚠️Carrito no encontrado (no existe)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-const updateByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const data = req.body;
-    const one = await cartsManager.updateById(id, data);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error("⚠️⚠️Carrito no encontrado (no existe)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-const destroyByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const one = await cartsManager.destroyById(id);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error("⚠️⚠️Carrito no encontrado (no existe)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-//const optsDenegado = { session: false, failureRedirect: "/api/auth/denegado" };
-
-
-cartsRouter.post("/",passportCb("current"), createOne);
-cartsRouter.get("/",passportCb("current"), readAll);
-cartsRouter.get("/:id",passportCb("current"), readByID);
-cartsRouter.put("/:id",passportCb("current"), updateByID);
-cartsRouter.delete("/:id",passportCb("current"), destroyByID);
-
+const cartsRouter = new CartsRouter().getRouter();
 export default cartsRouter;

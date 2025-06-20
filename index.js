@@ -1,4 +1,4 @@
-import "dotenv/config.js";
+import "./src/helpers/env.helper.js"
 import express, { json, urlencoded } from "express";
 import { engine } from "express-handlebars";
 import __dirname from "./utils.js";
@@ -9,6 +9,7 @@ import router from "./src/routers/index.router.js";
 import errorHandler from "./src/middlewares/errorHandler.mid.js";
 import pathHandler from "./src/middlewares/pathHandler.mid.js";
 import dbConnect from "./src/helpers/dbConnect.helper.js";
+import argsHelper from "./src/helpers/args.helper.js";
 //import MongoStore from "connect-mongo";
 // Configuración del Servidor
 const server = express();
@@ -18,6 +19,8 @@ const ready = async () => {
   try {
     await dbConnect(process.env.URL_MONGO);
     console.log(`El servidor está listo en el puerto: ${port}`);
+    console.log("Modo de: " + argsHelper.mode);
+    
   } catch (error) {
     console.error("Error al conectar con MongoDB:", error);
   }
@@ -44,3 +47,5 @@ server.use(morgan("dev"));
 server.use("/", router);
 server.use(errorHandler);
 server.use(pathHandler);
+
+

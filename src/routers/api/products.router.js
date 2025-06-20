@@ -1,123 +1,22 @@
-import { Router } from "express";
-import { productsManager } from "../../data/manager.mongo.js";
-//import passport from "../../middlewares/passport.mid.js";
-import passportCb from "../../middlewares/passportCb.mid.js";
+import RouterHelper from "../../helpers/Router.helper.js";
+import productsController from "../../controllers/products.controller.js";
 
-const productsRouter = Router();
+class ProductsRouter extends RouterHelper {
+constructor() {
+  super();
+  this.controller = productsController; // primero defino el controller
+  this.init(); // ahora sí puede usarlo
+}
 
-const createOne = async (req, res, next) => {
-  try {
-    console.log("🛠 Usuario autenticado:", req.user);
-    const data = req.body;
-    const one = await productsManager.createOne(data);
-    res.status(201).json({
-      method: req.method,
-      url: req.originalUrl,
-      response: one,
-    });
-  } catch (error) {
-    console.error("Error en createOne:", error);
-    next(error);
+
+  init() {
+    this.create("/", ["ADMIN"], this.controller.createOne);
+    this.read("/", ["PUBLIC"], this.controller.readAll);
+    this.read("/:id", ["PUBLIC"], this.controller.readByID);
+    this.update("/:id", ["ADMIN"], this.controller.updateByID);
+    this.delete("/:id", ["ADMIN"], this.controller.destroyByID);
   }
-};
+}
 
-const readAll = async (req, res, next) => {
-  try {
-    const filter = req.query;
-    const all = await productsManager.readAll(filter);
-
-    if (all.length > 0) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: all,
-      });
-    } else {
-      const error = new Error("No se encuentra");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    console.error("Error en readAll:", error);
-    next(error);
-  }
-};
-
-const readByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const one = await productsManager.readById(id);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error(" ⚠️⚠️Producto no encontrado (no exíste)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-const updateByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const data = req.body;
-    const one = await productsManager.updateById(id);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error(" ⚠️⚠️Producto no encontrado (no exíste)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-const destroyByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const one = await productsManager.destroyById(id);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error(" ⚠️⚠️Producto no encontrado (no exíste)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-productsRouter.post("/", passportCb("current_admin"), createOne);
-productsRouter.get("/", readAll);
-productsRouter.get("/:id", readByID);
-productsRouter.put("/:id", passportCb("current_admin"), updateByID);
-productsRouter.delete("/:id", passportCb("current_admin"), destroyByID);
-
+const productsRouter = new ProductsRouter().getRouter();
 export default productsRouter;
-
-
-
-
-
-//const optsDenegado = { session: false, failureRedirect: "/api/auth/denegado" };

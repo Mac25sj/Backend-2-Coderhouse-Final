@@ -1,123 +1,24 @@
-import { Router } from "express";
-import { usersManager } from "../../data/manager.mongo.js";
-//import passport from "../../middlewares/passport.mid.js";
-import passportCb from "../../middlewares/passportCb.mid.js";
+import RouterHelper from "../../helpers/Router.helper.js";
+import usersController from "../../controllers/users.controller.js";
+import passportCb from "../../middlewares/passportCb.mid.js"
 
 
-
-const usersRouter = Router();
-
-const createOne = async (req, res, next) => {
-  try {
-    const data = req.body;
-    const one = await usersManager.createOne(data);
-
-    res.status(201).json({
-      method: req.method,
-      url: req.originalUrl,
-      response: one,
-    });
-  } catch (error) {
-    console.error("Error en createOne:", error); 
-    next(error);
+class UsersRouter extends RouterHelper {
+  constructor() {
+    super();
+    this.controller = usersController;
+    this.init();
   }
-};
 
-const readAll = async (req, res, next) => {
-  try {
-    const filter = req.query;
-    const all = await usersManager.readAll(filter);
-
-    if (all.length > 0) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: all,
-      });
-    } else {
-      const error = new Error("No se encuentra");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    console.error("Error en readAll:", error); // Mejor manejo de errores
-    next(error);
+  init() {
+    this.create("/", ["ADMIN"], this.controller.createOne);
+    this.read("/", ["ADMIN"], this.controller.readAll);
+    this.read("/:id", ["ADMIN"], this.controller.readByID);
+    this.update("/:id", ["USER"], this.controller.updateByID);
+    this.delete("/:id", ["USER"], this.controller.destroyByID);
   }
-};
+}
 
-const readByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const one = await usersManager.readById(id);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error(" ⚠️⚠️Producto no encontrado (no exíste)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-const updateByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const data = req.body 
-   const one = await usersManager.updateById(id, data);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error(" ⚠️⚠️Producto no encontrado (no exíste)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-const destroyByID = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const one = await usersManager.destroyById(id);
-
-    if (one) {
-      res.status(200).json({
-        method: req.method,
-        url: req.originalUrl,
-        response: one,
-      });
-    } else {
-      const error = new Error(" ⚠️⚠️Producto no encontrado (no exíste)");
-      error.statusCode = 404;
-      throw error;
-    }
-  } catch (error) {
-    next(error);
-  }
-};
-
-
-
-usersRouter.post("/", passportCb("current_admin"), createOne);
-usersRouter.get("/", passportCb("current_admin"), readAll);
-usersRouter.get("/:id",passportCb("current_admin"), readByID);
-usersRouter.put("/:id", passportCb("current"), updateByID);
-usersRouter.delete("/:id", passportCb("current"), destroyByID);
-
+const usersRouter = new UsersRouter().getRouter();
 export default usersRouter;
-
-
 //const optsDenegado = { session: false, failureRedirect: "/api/auth/denegado" };

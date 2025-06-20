@@ -1,47 +1,19 @@
-import { Router } from "express";
-import session from "express-session";
+import RouterHelper from "../../helpers/Router.helper.js";
+import sessionsController from "../../controllers/session.controller.js";
 
-const sessionsRouter = Router();
-
-const createCb = (req, res, next) => {
-  try {
-    const { method, originalUrl: url } = req;
-    const message = "Se ha creado una sección de forma exitosa (201) 👍";
-    const data = { method, url, message };
-    req.session.role = "ADMIN";
-    req.session.user_id = "prueba123";
-    res.status(201).json(data);
-  } catch (error) {
-    next(error);
+class SessionsRouter extends RouterHelper {
+  constructor() {
+    super();
+    this.controller = sessionsController;
+    this.init();
   }
-};
 
-const readCb = (req, res, next) => {
-  try {
-    const { method, originalUrl: url } = req;
-    const message = "Se ha leeído una cookie de forma exitosa (200) 👍";
-    const session = req.session;
-    const data = { method, url, message, session };
-    res.status(200).json(data);
-  } catch (error) {
-    next(error);
+  init() {
+    this.read("/create", this.controller.create);
+    this.read("/read", this.controller.read);
+    this.read("/destroy", this.controller.destroy);
   }
-};
+}
 
-const destroyCb = (req, res, next) => {
-  try {
-    const { method, originalUrl: url } = req;
-    const message = "Se ha suprimido una sección de forma exitosa (200) 👍";
-    const data = { method, url, message };
-    req.session.destroy();
-    res.status(200).json(data);
-  } catch (error) {
-    next(error);
-  }
-};
-
-sessionsRouter.use("/create", createCb);
-sessionsRouter.use("/read", readCb);
-sessionsRouter.use("/destroy", destroyCb);
-
+const sessionsRouter = new SessionsRouter().getRouter();
 export default sessionsRouter;

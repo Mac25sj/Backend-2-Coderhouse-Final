@@ -1,61 +1,19 @@
-import { Router } from "express";
+import RouterHelper from "../../helpers/Router.helper.js";
+import cookiesController from "../../controllers/cookies.controller.js";
 
-const cookiesRouter = Router();
-
-const createCb = (req, res, next) => {
-  try {
-    const { method, originalUrl: url } = req;
-    const message = "Se ha creado una cookie de forma exitosa (201) 👍";
-    const data = { method, url, message };
-
-    res
-      .status(201)
-      .cookie("user_id", "ValorCookie1234", { maxAge: 7 * 24 * 60 * 60 * 1000 })
-      .cookie("role", "current_admin", {
-        maxAge: 12 * 24 * 60 * 60 * 1000,
-        signed: true,
-      })
-      .json(data);
-  } catch (error) {
-    next(error);
-    res.status(error.status || 500).json({ error: error.message });
+class CookiesRouter extends RouterHelper {
+  constructor() {
+    super();
+    this.controller = cookiesController;
+    this.init();
   }
-};
 
-const readCb = (req, res, next) => {
-  try {
-    const { method, originalUrl: url } = req;
-    const message = "Cookie leída 👌👌";
-    const cookies = { coookies: req.cookies, signed: req.signedCookies };
-    const data = { method, url, message, cookies };
-
-    res.status(200).json(data);
-  } catch (error) {
-    next(error);
-    res.status(error.status || 500).json({ error: error.message });
+  init() {
+    this.read("/create", this.controller.create);
+    this.read("/read", this.controller.read);
+    this.read("/clear", this.controller.clear);
   }
-};
+}
 
-const clearCb = (req, res, next) => {
-  try {
-    const { method, originalUrl: url } = req;
-    const message = "La cookie se ha limpiado correctamente";
-    const data = { method, url, message };
-
-    res
-      .status(200)
-      .clearCookie("role", { signed: true }) // Cookie firmada
-      .clearCookie("user_id") // Cookie normal
-      .json(data);
-  } catch (error) {
-    next(error);
-    res.status(error.status || 500).json({ error: error.message });
-  }
-};
-
-/* Rutas de cookies */
-cookiesRouter.get("/create", createCb);
-cookiesRouter.get("/read", readCb);
-cookiesRouter.get("/clear", clearCb);
-
+const cookiesRouter = new CookiesRouter().getRouter();
 export default cookiesRouter;
