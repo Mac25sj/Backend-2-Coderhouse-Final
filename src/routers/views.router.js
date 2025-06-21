@@ -1,5 +1,5 @@
 import RouterHelper from "../helpers/Router.helper.js";
-import { productsManager } from "../data/manager.mongo.js";
+import productsRepository from "../repositories/products.repository.js";
 
 class ViewsRouter extends RouterHelper {
   constructor() {
@@ -16,13 +16,13 @@ class ViewsRouter extends RouterHelper {
   }
 
   homeViewCb = async (req, res) => {
-    const products = await productsManager.readAll();
+    const products = await productsRepository.find();
     res.render("index", { products });
   };
 
   productViewCb = async (req, res) => {
     const { pid } = req.params;
-    const product = await productsManager.readById(pid);
+    const product = await productsRepository.findById(pid);
     res.render("product", { product });
   };
 
@@ -31,12 +31,12 @@ class ViewsRouter extends RouterHelper {
   };
 
   loginViewCb = async (req, res) => {
-    const products = await productsManager.readAll();
+    const products = await productsRepository.find();
     res.render("login", { products });
   };
 
   profileViewCb = async (req, res) => {
-    const products = await productsManager.readAll();
+    const products = await productsRepository.find();
     res.render("profile", { products });
   };
 }

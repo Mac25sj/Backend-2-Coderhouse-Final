@@ -4,11 +4,11 @@ import { engine } from "express-handlebars";
 import __dirname from "./utils.js";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import cors from "cors"
 //import session from "express-session";
 import router from "./src/routers/index.router.js";
 import errorHandler from "./src/middlewares/errorHandler.mid.js";
 import pathHandler from "./src/middlewares/pathHandler.mid.js";
-import dbConnect from "./src/helpers/dbConnect.helper.js";
 import argsHelper from "./src/helpers/args.helper.js";
 //import MongoStore from "connect-mongo";
 // Configuración del Servidor
@@ -17,8 +17,9 @@ const port = process.env.PORT || 8080;
 
 const ready = async () => {
   try {
-    await dbConnect(process.env.URL_MONGO);
-    console.log(`El servidor está listo en el puerto: ${port}`);
+;
+   console.log(`El servidor está listo en: http://localhost:${port}`);
+console.log("Modo de: " + argsHelper.mode);
     console.log("Modo de: " + argsHelper.mode);
     
   } catch (error) {
@@ -42,6 +43,10 @@ server.use(urlencoded({ extended: true }));
 server.use(json());
 server.use(express.static("public"));
 server.use(morgan("dev"));
+server.use(cors({
+  credentials: true,
+  origin: true // se cambio por http....(no hay dominio actual) 
+}))
 
 // Configuración de Enrutamiento
 server.use("/", router);

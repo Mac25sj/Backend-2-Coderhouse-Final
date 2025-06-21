@@ -2,10 +2,10 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Strategy as GoogleStrategy } from "passport-google-oauth2";
 import { ExtractJwt, Strategy as JwtStrategy } from "passport-jwt";
-import { compareHash, createHash } from "../helpers/hash.util.js";
-import { usersManager } from "../data/manager.mongo.js";
+import { compareHash,} from "../helpers/hash.util.js";
+import usersRepository from "../repositories/users.repository.js";
 import { createToken } from "../helpers/token.util.js";
-import mongoose from "mongoose"; 
+import mongoose from "mongoose";
 
 const callbackUrl = "http://localhost:8080/api/auth/google/redirect";
 
@@ -23,14 +23,14 @@ passport.use(
           return done(null, false, { message: "Datos inválidos o insuficientes" });
         }
 
-        let user = await usersManager.readBy({ email });
+        let user = await usersRepository.find({ email });
         if (user) {
           console.log("⚠️ El correo ya está registrado");
           return done(null, false, { message: "El correo ya está registrado" });
         }
-
-        req.body.password = createHash(password);
-        user = await usersManager.createOne(req.body);
+        //Al usar repository que ya hasea
+        //req.body.password = createHash(password);
+        user = await usersRepository.create(req.body);
 
         console.log("✅ Usuario registrado correctamente:", user);
         return done(null, user);
@@ -51,7 +51,7 @@ passport.use(
       try {
         console.log("📡 Intento de login con email:", email);
 
-        let user = await usersManager.readBy({ email });
+        let user = await usersRepository.find({ email });
         if (!user) {
           console.log("❌ Usuario no encontrado");
           return done(null, false, { message: "Credenciales inválidas" });
@@ -68,13 +68,13 @@ passport.use(
         console.log("✅ Contraseña verificada correctamente");
 
         const data = {
-          _id: user._id.toString(), 
+          _id: user._id.toString(),
           role: user.role,
           email,
         };
 
         const token = createToken(data);
-        await usersManager.model.findByIdAndUpdate(user._id, { token }, { new: true });
+        await usersRepository.update(user._id, { token });
         user.token = token;
 
         console.log("✅ Token generado y almacenado:", token);
@@ -87,19 +87,21 @@ passport.use(
   )
 );
 
-// Estrategia de autenticación con JWT para usuarios comunes
+// Estrategia JWT para usuarios comunes
 passport.use(
   "current",
   new JwtStrategy(
     {
       secretOrKey: process.env.SECRET,
-      jwtFromRequest: ExtractJwt.fromExtractors([req => req?.cookies?.token || req?.signedCookies?.token]),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req) => req?.cookies?.token || req?.signedCookies?.token,
+      ]),
     },
     async (data, done) => {
       try {
         console.log("🔍 Datos extraídos del JWT:", data);
 
-        const user = await usersManager.readBy({ _id: new mongoose.Types.ObjectId(data._id) });
+        const user = await usersRepository.find({ _id: new mongoose.Types.ObjectId(data._id) });
 
         if (!user) {
           const error = new Error("Ingreso denegado, no se encontró el usuario");
@@ -115,25 +117,26 @@ passport.use(
   )
 );
 
-// Estrategia de autenticación con JWT para administradores
+// Estrategia JWT para administradores
 passport.use(
   "current_admin",
   new JwtStrategy(
     {
       secretOrKey: process.env.SECRET,
-      jwtFromRequest: ExtractJwt.fromExtractors([req => req?.cookies?.token || req?.signedCookies?.token]),
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req) => req?.cookies?.token || req?.signedCookies?.token,
+      ]),
     },
     async (data, done) => {
       try {
         console.log("🔍 Datos extraídos del JWT:", data);
 
-        // 🛠 Convertir `_id` a `ObjectId` antes de la consulta
-        const user = await usersManager.readBy({ _id: new mongoose.Types.ObjectId(data._id) });
+        const user = await usersRepository.find({ _id: new mongoose.Types.ObjectId(data._id) });
 
         if (!user || user.role !== "ADMIN") {
-        const error = new Error("Ingreso denegado, usuario no encontrado o sin permisos");
+          const error = new Error("Ingreso denegado, usuario no encontrado o sin permisos");
           error.statusCode = 403;
-          throw error;  
+          throw error;
         }
 
         console.log("✅ Usuario autenticado correctamente:", user);

@@ -1,14 +1,16 @@
 import User from "./models/users.model.js";
 import Product from "./models/products.model.js";
 import Cart from "./models/carts.model.js";
+import dbConnect from "../../helpers/dbConnect.helper.js";
 
-class ManagerMongo {
+await dbConnect(process.env.URL_MONGO); // Conexión previa a instancias
+
+class DaoMongo {
   constructor(model) {
     if (!model) throw new Error("El modelo es requerido.");
     this.model = model;
   }
 
-  // Métodos con manejo de errores
   createOne = async (data) => {
     try {
       return await this.model.create(data);
@@ -64,9 +66,8 @@ class ManagerMongo {
   };
 }
 
-// Inicializar gestores
-const usersManager = new ManagerMongo(User);
-const productsManager = new ManagerMongo(Product);
-const cartsManager = new ManagerMongo(Cart);
+const usersManager = new DaoMongo(User);
+const productsManager = new DaoMongo(Product);
+const cartsManager = new DaoMongo(Cart);
 
 export { usersManager, productsManager, cartsManager };

@@ -1,4 +1,4 @@
-import { usersManager } from "../data/manager.mongo.js";
+import usersRepository from "../repositories/users.repository.js";
 import { verifyToken } from "../helpers/token.util.js";
 
 const setupPolicies = (policies) => async (req, res, next) => {
@@ -11,11 +11,10 @@ const setupPolicies = (policies) => async (req, res, next) => {
 
     if (!_id) return res.json401("Token inválido o no autenticado");
 
-    // Reglas por rol
     const authorized = policies.includes(role);
     if (!authorized) return res.json403("No tienes permisos");
 
-    const user = await usersManager.readById(_id);
+    const user = await usersRepository.findById(_id);
     if (!user) return res.json401("Usuario no encontrado");
 
     req.user = user;

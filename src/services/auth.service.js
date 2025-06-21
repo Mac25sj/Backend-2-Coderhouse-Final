@@ -1,9 +1,9 @@
-import { usersManager } from "../data/manager.mongo.js";
+import dao from "../dao/factory.js";
 import { verifyToken } from "../helpers/token.util.js";
 
 class AuthService {
   constructor() {
-    this.manager = usersManager;
+    this.manager = dao.users;
   }
 
   async verifyUserByToken(token) {
@@ -13,7 +13,9 @@ class AuthService {
     const user = await this.manager.readById(decoded._id);
     if (!user) return null;
 
-    const userObj = user.toObject();
+    // Si el DAO devuelve un documento Mongoose, usá .toObject(); 
+    // si usás .lean() en los métodos del DAO, no es necesario
+    const userObj = { ...user }; // asumiendo que ya es plano
     delete userObj.password;
     return userObj;
   }
