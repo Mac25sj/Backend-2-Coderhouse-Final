@@ -10,14 +10,22 @@ class RouterHelper {
 
   getRouter = () => this.router;
 
-  applyCallbacks = (callbacks) =>
-    callbacks.map((cb) => async (req, res, next) => {
+applyCallbacks = (callbacks) =>
+  callbacks.map((cb, i) => {
+    if (typeof cb !== "function") {
+      console.error(`❌ Callback en posición [${i}] no es una función:`, cb);
+      throw new TypeError(`Callback en posición [${i}] no es una función`);
+    }
+
+    return async (req, res, next) => {
       try {
         await cb(req, res, next);
       } catch (error) {
         next(error);
       }
-    });
+    };
+  });
+
 
   applyCallbacksRender = (callbacks) =>
     callbacks.map((cb) => async (req, res, next) => {

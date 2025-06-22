@@ -1,16 +1,27 @@
-<main class="d-flex flex-column align-items-center w-100 flex-grow-1">
-  <h1 class="bg-success-subtle p-2 text-center text-success w-100"></h1>
-  <section class="d-flex flex-wrap justify-content-evenly">
-    {{!-- Iteracción --}}
+<main class="container py-5">
+  <h1 class="mb-4">Productos disponibles</h1>
+
+  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
     {{#each products}}
-    <div class="card m-1" style="width: 18rem;">
-            <img src={{this.image}} class="card-img-top" alt={{this._id}} style="height: 12rem;">
-            <div class="card-body">
-                <h5 class="card-title">{{this.title}}</h5>
-                <p class="card-text">USD{{this.price}}</p>
-                <a href="/product/{{this._id}}" class="btn btn-primary">Más</a>
+      <div class="col">
+        <div class="card h-100">
+          <img src="{{this.image}}" class="card-img-top" alt="{{this.title}}">
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title">{{this.title}}</h5>
+            <p class="card-text">{{this.description}}</p>
+            <p class="card-text"><strong>Precio:</strong> USD{{this.price}}</p>
+            <p class="card-text"><strong>Stock:</strong> {{this.stock}}</p>
+            <p class="card-text"><small class="text-muted">{{this.category}}</small></p>
+
+            <div class="mt-auto d-flex justify-content-between">
+              <a href="/products/{{this._id}}" class="btn btn-outline-primary">Ver más</a>
+              <form action="/api/carts/add/{{this._id}}" method="post">
+                <button type="submit" class="btn btn-success">Agregar</button>
+              </form>
             </div>
+          </div>
         </div>
+      </div>
     {{/each}}
-  </section>
+  </div>
 </main>

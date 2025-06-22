@@ -1,4 +1,6 @@
+import usersController from "../controllers/users.controller.js";
 import usersRepository from "../repositories/users.repository.js";
+
 
 class UsersService {
   constructor() {

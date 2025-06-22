@@ -16,11 +16,16 @@ class UserDTO {
     this.role = data.role || "user";
 
     if (data.password) {
-      this.password = createHash(data.password);
+      const isHash = /^\$2[aby]?\$/.test(data.password); // Detecta bcrypt hash
+      this.password = isHash ? data.password : createHash(data.password);
     }
 
     if (data.cart) {
       this.cart = data.cart;
+    }
+
+    if (data.token) {
+      this.token = data.token;
     }
   }
 }

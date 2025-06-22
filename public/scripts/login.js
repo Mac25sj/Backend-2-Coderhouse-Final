@@ -1,45 +1,48 @@
-console.log("🟢 Inicia login");
+const form = document.querySelector("#loginForm");
+const button = document.querySelector("#login");
+const emailInput = document.querySelector("#email");
+const passwordInput = document.querySelector("#password");
 
 const login = async () => {
+  const email = emailInput.value.trim().toLowerCase();
+  const password = passwordInput.value;
+
+  if (!email || !password) {
+    alert("Por favor, completá todos los campos.");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Iniciando...";
+
   try {
-    const data = {
-      email: document.querySelector("#email").value,
-      password: document.querySelector("#password").value,
-      role: document.querySelector("#role").value || "user"
-    };
-
-    console.log("📡 Datos enviados al servidor:", data);
-
-    const opts = {
+    const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    };
+      credentials: "include", // 👈 clave para aceptar cookie del token
+      body: JSON.stringify({ email, password }),
+    });
 
-    const url = "/api/auth/login";
-    let response = await fetch(url, opts);
-
-    console.log("🔍 Respuesta cruda del servidor:", response);
-
-    if (!response.ok) {
-      console.error(`❌ Error HTTP: ${response.status}`);
-      return alert(`Error al iniciar sesión: ${response.status}`);
+    if (!res.ok) {
+      const error = await res.json();
+      alert("❌ " + (error?.error || "Login fallido"));
+      return;
     }
 
-    const jsonResponse = await response.json();
-    console.log("✅ Respuesta procesada:", jsonResponse);
-
-    if (jsonResponse.error) {
-      alert(jsonResponse.error);
-    } else {
-      console.log("✅ Login exitoso, redirigiendo...");
-      location.replace("/profile"); // Redirigir a la vista de perfil después del login
-    }
-  } catch (error) {
-    console.error("⚠️ Error en login:", error);
-    alert("Ocurrió un error al intentar iniciar sesión.");
+    const json = await res.json();
+    alert(`¡Bienvenido ${json.user.email}!`);
+    location.replace("/profile");
+  } catch (err) {
+    console.error("❌ Error en login:", err);
+    alert("No se pudo iniciar sesión.");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Iniciar sesión";
   }
 };
 
-// Event listener para el botón de login
-document.querySelector("#login").addEventListener("click", login);
+button.addEventListener("click", login);
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  login();
+});

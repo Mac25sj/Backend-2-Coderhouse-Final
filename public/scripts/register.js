@@ -1,49 +1,54 @@
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelector("#btnRegister").addEventListener("click", register);
-});
-const register = async () => {
-  try {
-    const firstNameElement = document.querySelector("#first_name");
-    const lastNameElement = document.querySelector("#last_name");
-    const emailElement = document.querySelector("#email");
-    const ageElement = document.querySelector("#age");
-    const passwordElement = document.querySelector("#password");
-    const roleElement = document.querySelector("#role");
+  const form = document.querySelector("#registerForm");
+  const button = document.querySelector("#btnRegister");
 
-    if (!firstNameElement || !lastNameElement || !emailElement || !passwordElement) {
-      alert("Error: Algunos elementos del formulario no fueron encontrados.");
+  const register = async () => {
+    const data = {
+      first_name: document.querySelector("#first_name").value.trim(),
+      last_name: document.querySelector("#last_name").value.trim(),
+      email: document.querySelector("#email").value.trim().toLowerCase(),
+      age: parseInt(document.querySelector("#age").value, 10) || undefined,
+      password: document.querySelector("#password").value,
+      role: document.querySelector("#role")?.value || "user"
+    };
+
+    if (!data.first_name || !data.last_name || !data.email || !data.password) {
+      alert("Por favor, completá todos los campos requeridos.");
       return;
     }
 
+    button.disabled = true;
+    button.textContent = "Registrando...";
 
-    const data = {
-      first_name: firstNameElement.value,
-      last_name: lastNameElement.value,
-      email: emailElement.value,
-      age: ageElement ? parseInt(ageElement.value, 10) : undefined,
-      password: passwordElement.value,
-      role: roleElement ? roleElement.value : "user"
-    };
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // 👈 importante por si el backend responde con cookies
+        body: JSON.stringify(data),
+      });
 
-    const opts = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    };
+      const result = await res.json();
+      console.log("📝 Respuesta del registro:", result);
 
-    const response = await fetch("/api/auth/register", opts);
-    const result = await response.json();
-console.log("Respuesta del servidor:", result);
-    console.log(result);
-
-    if (response.ok) {
-      alert(result.message);
-      location.replace("/login");
-    } else {
-      alert(result.error);
+      if (res.ok) {
+        alert(result.message || "Registro exitoso");
+        location.replace("/login?registered=true");
+      } else {
+        alert("❌ " + (result?.error || "Registro fallido"));
+      }
+    } catch (err) {
+      console.error("❌ Error en registro:", err);
+      alert("Ocurrió un error al registrar el usuario.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Registrarse";
     }
-  } catch (error) {
-    alert("Error al registrar el usuario.");
-    console.error(error);
-  }
-};
+  };
+
+  button.addEventListener("click", register);
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    register();
+  });
+});

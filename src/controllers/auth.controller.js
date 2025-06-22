@@ -1,46 +1,69 @@
-import authService from "../services/auth.service.js";
-import { verifyToken } from "../helpers/token.util.js";
+import usersRepository from "../repositories/users.repository.js";
 
-class AuthController {
-  register = async (req, res) => {
-    res.json201(null, "Registro exitoso, redirigiendo a login...");
-  };
+const authController = {
+  async login(req, res) {
+    try {
+      const user = req.user;
+      if (!user) return res.status(401).json({ error: "Credenciales inválidas" });
 
-  login = async (req, res) => {
-    const opts = {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      signed: true,
-    };
+      res
+        .cookie("token", user.token, {
+          httpOnly: true,
+          maxAge: 60 * 60 * 1000 // 1 hora
+        })
+        .json({
+          message: "Login exitoso",
+          user
+        }); // 👈 RESPUESTA JSON compatible con fetch()
+    } catch (err) {
+      console.error("Error en login:", err);
+      res.status(500).json({ error: "Error interno" });
+    }
+  },
 
-    const { user } = req;
-    if (!user || !user.token) return res.json401("Credenciales inválidas");
+  async register(req, res) {
+    try {
+      res.redirect("/login");
+    } catch (err) {
+      res.status(500).json({ error: "Error al registrar usuario" });
+    }
+  },
 
-    res.cookie("token", user.token, opts).json200({ message: "Login exitoso", user });
-  };
+  async signout(req, res) {
+    try {
+      const user = req.user;
+      await usersRepository.update(user._id, { token: null });
+      res.clearCookie("token");
+      res.redirect("/login");
+    } catch (err) {
+      res.status(500).json({ error: "Error al cerrar sesión" });
+    }
+  },
 
-  signout = (req, res) => {
-    res.clearCookie("token").json200(null, "Sesión cerrada correctamente");
-  };
+  async online(req, res) {
+    try {
+      res.status(200).json({ message: "Usuario autenticado", user: req.user });
+    } catch (err) {
+      res.status(500).json({ error: "No se pudo verificar sesión" });
+    }
+  },
 
-  online = async (req, res) => {
-    const { token } = req.signedCookies;
-    if (!token) return res.json401("Token no proporcionado");
+  async profile(req, res) {
+    try {
+      res.render("profile", { user: req.user });
+    } catch (err) {
+      console.error("Error al cargar perfil:", err);
+      res.status(500).send("Error al cargar perfil");
+    }
+  },
 
-    const user = await authService.verifyUserByToken(token);
-    if (!user) return res.json401("Usuario no válido");
+  async badAuth(_, res) {
+    res.status(401).json({ error: "Autenticación fallida" });
+  },
 
-    res.json200({ user });
-  };
+  async denegado(_, res) {
+    res.status(403).json({ error: "Acceso denegado" });
+  }
+};
 
-  badAuth = (req, res) => {
-    res.json401("Error autenticando");
-  };
-
-  denegado = (req, res) => {
-    res.json403("Acceso denegado, no tienes permisos");
-  };
-}
-
-const authController = new AuthController();
 export default authController;

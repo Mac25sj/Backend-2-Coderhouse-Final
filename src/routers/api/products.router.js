@@ -2,12 +2,11 @@ import RouterHelper from "../../helpers/Router.helper.js";
 import productsController from "../../controllers/products.controller.js";
 
 class ProductsRouter extends RouterHelper {
-constructor() {
-  super();
-  this.controller = productsController; // primero defino el controller
-  this.init(); // ahora sí puede usarlo
-}
-
+  constructor() {
+    super();
+    this.controller = productsController;
+    this.init();
+  }
 
   init() {
     this.create("/", ["ADMIN"], this.controller.createOne);

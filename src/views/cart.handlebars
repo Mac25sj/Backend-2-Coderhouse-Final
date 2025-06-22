@@ -1,0 +1,21 @@
+<main class="container py-5">
+  <h1>🛒 Mi Carrito</h1>
+
+  {{#if cartItems.length}}
+    <ul class="list-group mb-4">
+      {{#each cartItems}}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            {{this.product_id.title}} — USD{{this.product_id.price}}
+          </div>
+          <span>x{{this.quantity}}</span>
+        </li>
+      {{/each}}
+    </ul>
+    <form action="/api/carts/checkout" method="post">
+      <button class="btn btn-success">Finalizar compra</button>
+    </form>
+  {{else}}
+    <p class="alert alert-warning">Tu carrito está vacío.</p>
+  {{/if}}
+</main>

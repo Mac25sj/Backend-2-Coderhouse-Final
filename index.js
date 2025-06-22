@@ -20,7 +20,6 @@ const ready = async () => {
 ;
    console.log(`El servidor está listo en: http://localhost:${port}`);
 console.log("Modo de: " + argsHelper.mode);
-    console.log("Modo de: " + argsHelper.mode);
     
   } catch (error) {
     console.error("Error al conectar con MongoDB:", error);

@@ -1,4 +1,5 @@
 import usersService from "../services/users.service.js";
+import sendEmail from "../helpers/email.helper.js";
 
 class UsersController {
   constructor() {
@@ -14,9 +15,7 @@ class UsersController {
   readAll = async (req, res) => {
     const filter = req.query;
     const all = await this.service.readAll(filter);
-    all.length > 0
-      ? res.json200(all)
-      : res.json404("No se encontraron usuarios");
+    all.length > 0 ? res.json200(all) : res.json404("No se encontraron usuarios");
   };
 
   readByID = async (req, res) => {
@@ -29,17 +28,24 @@ class UsersController {
     const { id } = req.params;
     const data = req.body;
     const one = await this.service.updateByID(id, data);
-    one
-      ? res.json200(one)
-      : res.json404("Usuario no encontrado para actualizar");
+    one ? res.json200(one) : res.json404("Usuario no encontrado para actualizar");
   };
 
   destroyByID = async (req, res) => {
     const { id } = req.params;
     const one = await this.service.destroyByID(id);
-    one
-      ? res.json200(one)
-      : res.json404("Usuario no encontrado para eliminar");
+    one ? res.json200(one) : res.json404("Usuario no encontrado");
+  };
+
+  sendEmail = async (req, res, next) => {
+    try {
+      const { method, originalUrl: url } = req;
+      const { email } = req.params; 
+      await sendEmail(email);
+      res.status(200).json({ message: "Correo enviado", method, url });
+    } catch (error) {
+      next(error);
+    }
   };
 }
 

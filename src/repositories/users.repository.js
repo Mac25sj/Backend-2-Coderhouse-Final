@@ -11,8 +11,8 @@ class UsersRepository {
     return await this.manager.createOne(dto);
   }
 
-  async find(filter = {}) {
-    return await this.manager.readAll(filter);
+  async find(filter) {
+    return await this.manager.readAll(filter); // 👈 Alias agregado para compatibilidad
   }
 
   async findById(id) {
@@ -29,6 +29,10 @@ class UsersRepository {
 
   async delete(id) {
     return await this.manager.destroyById(id);
+  }
+
+  async clearToken(id) {
+    return await this.update(id, { token: null });
   }
 }
 
